@@ -1,7 +1,7 @@
 #!/bin/bash
 
-LIBXFIXES_REPO="https://gitlab.freedesktop.org/xorg/lib/libxfixes.git"
-LIBXFIXES_COMMIT="6fe3bd64dd82f704ed91478acb4c99ab5c00be16"
+SCRIPT_REPO="https://gitlab.freedesktop.org/xorg/lib/libxfixes.git"
+SCRIPT_COMMIT="d10ec36c81a6b488d1f700a28c5bff4714287b78"
 
 ffbuild_enabled() {
     [[ $TARGET != linux* ]] && return -1
@@ -9,7 +9,7 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$LIBXFIXES_REPO" "$LIBXFIXES_COMMIT" libxfixes
+    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" libxfixes
     cd libxfixes
 
     autoreconf -i

@@ -1,18 +1,20 @@
 #!/bin/bash
 
-XAVS2_REPO="https://github.com/pkuvcl/xavs2.git"
-XAVS2_COMMIT="eae1e8b9d12468059bdd7dee893508e470fa83d8"
+SCRIPT_REPO="https://github.com/pkuvcl/xavs2.git"
+SCRIPT_COMMIT="eae1e8b9d12468059bdd7dee893508e470fa83d8"
 
 ffbuild_enabled() {
     [[ $VARIANT == lgpl* ]] && return -1
     [[ $TARGET == win32 ]] && return -1
+    # xavs2 aarch64 support is broken
+    [[ $TARGET == linuxarm64 ]] && return -1
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git clone "$XAVS2_REPO" xavs2
+    git clone "$SCRIPT_REPO" xavs2
     cd xavs2
-    git checkout "$XAVS2_COMMIT"
+    git checkout "$SCRIPT_COMMIT"
     cd build/linux
 
     local myconf=(

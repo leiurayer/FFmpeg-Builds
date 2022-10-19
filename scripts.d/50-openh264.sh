@@ -1,14 +1,14 @@
 #!/bin/bash
 
-OPENH264_REPO="https://github.com/cisco/openh264.git"
-OPENH264_COMMIT="0819f288dc5fc24fb34089113bc230aea65c8375"
+SCRIPT_REPO="https://github.com/cisco/openh264.git"
+SCRIPT_COMMIT="0c19a5c266275693484ed84edf6ff8cb7cd89d4e"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$OPENH264_REPO" "$OPENH264_COMMIT" openh264
+    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" openh264
     cd openh264
 
     local myconf=(
@@ -36,6 +36,11 @@ ffbuild_dockerbuild() {
         myconf+=(
             OS=linux
             ARCH=x86_64
+        )
+    elif [[ $TARGET == linuxarm64 ]]; then
+        myconf+=(
+            OS=linux
+            ARCH=aarch64
         )
     else
         echo "Unknown target"

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-LIBXRANDR_REPO="https://gitlab.freedesktop.org/xorg/lib/libxrandr.git"
-LIBXRANDR_COMMIT="55dcda4518eda8ae03ef25ea29d3c994ad71eb0a"
+SCRIPT_REPO="https://gitlab.freedesktop.org/xorg/lib/libxrandr.git"
+SCRIPT_COMMIT="d66693441f688867e6fd4a5d4a4bdade9a338755"
 
 ffbuild_enabled() {
     [[ $TARGET != linux* ]] && return -1
@@ -9,7 +9,7 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$LIBXRANDR_REPO" "$LIBXRANDR_COMMIT" libxrandr
+    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" libxrandr
     cd libxrandr
 
     autoreconf -i
@@ -20,6 +20,12 @@ ffbuild_dockerbuild() {
         --disable-static
         --with-pic
     )
+
+    if [[ $TARGET == linuxarm64 ]]; then
+        myconf+=(
+            --disable-malloc0returnsnull
+        )
+    fi
 
     if [[ $TARGET == linux* ]]; then
         myconf+=(

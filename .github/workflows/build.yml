@@ -12,6 +12,11 @@ on:
         type: boolean
         default: false
         required: false
+      buildOnly:
+        description: 'Only build ffmpeg'
+        type: boolean
+        default: false
+        required: false
   schedule:
     - cron: '0 0 1 * *'
 
@@ -21,6 +26,7 @@ env:
 jobs:
   build_base:
     name: Build base image
+    if: ${{ github.event.inputs.buildOnly != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -51,12 +57,13 @@ jobs:
           cache-from: type=registry,ref=${{ steps.imagename.outputs.name }}:cache
   build_target_bases:
     name: Build target base image
+    if: ${{ github.event.inputs.buildOnly != 'true' }}
     needs: build_base
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        target: [win32,win64,linux64]
+        target: [win32,win64,linux64,linuxarm64]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -86,13 +93,14 @@ jobs:
           cache-from: type=registry,ref=${{ steps.imagename.outputs.name }}:cache
   build_targets:
     name: Build target-variant image
+    if: ${{ github.event.inputs.buildOnly != 'true' }}
     needs: build_target_bases
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        target: [win32,win64,linux64]
-        variant: [gpl,lgpl,gpl 4.4,gpl 5.0,lgpl 4.4,lgpl 5.0,gpl-shared,lgpl-shared,gpl-shared 4.4,gpl-shared 5.0,lgpl-shared 4.4,lgpl-shared 5.0]
+        target: [win32,win64,linux64,linuxarm64]
+        variant: [gpl,lgpl,gpl 4.4,gpl 5.1,lgpl 4.4,lgpl 5.1,gpl-shared,lgpl-shared,gpl-shared 4.4,gpl-shared 5.1,lgpl-shared 4.4,lgpl-shared 5.1]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -113,6 +121,7 @@ jobs:
         run: |
           IMG="ghcr.io/${GITHUB_REPOSITORY,,}/${{ matrix.target }}-${{ matrix.variant }}"
           echo "::set-output name=name::${IMG/ /-}"
+          echo "::set-output name=gh_repo::${GITHUB_REPOSITORY,,}"
       - name: Stop Commands
         run: T="$(echo -n ${{ github.token }} | sha256sum | head -c 64)" && echo -e "::add-mask::${T}\n::stop-commands::${T}"
       - name: Build target base image
@@ -124,15 +133,18 @@ jobs:
           tags: ${{ steps.imagename.outputs.name }}:latest
           cache-to: type=registry,mode=max,ref=${{ steps.imagename.outputs.name }}:cache
           cache-from: type=registry,ref=${{ steps.imagename.outputs.name }}:cache
+          build-args: |
+            GH_REPO=ghcr.io/${{ steps.imagename.outputs.gh_repo }}
   build_ffmpeg:
     name: Build ffmpeg
+    if: ${{ ( github.event.inputs.buildOnly == 'true' && !cancelled() ) || success() }}
     needs: build_targets
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        target: [win32,win64,linux64]
-        variant: [gpl,lgpl,gpl 4.4,gpl 5.0,lgpl 4.4,lgpl 5.0,gpl-shared,lgpl-shared,gpl-shared 4.4,gpl-shared 5.0,lgpl-shared 4.4,lgpl-shared 5.0]
+        target: [win32,win64,linux64,linuxarm64]
+        variant: [gpl,lgpl,gpl 4.4,gpl 5.1,lgpl 4.4,lgpl 5.1,gpl-shared,lgpl-shared,gpl-shared 4.4,gpl-shared 5.1,lgpl-shared 4.4,lgpl-shared 5.1]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -153,7 +165,7 @@ jobs:
           path: artifacts/*
   publish_release:
     name: Publish release
-    if: ${{ github.event_name == 'schedule' || github.event.inputs.doRelease == 'true' }}
+    if: ${{ !cancelled() && ( github.event_name == 'schedule' || github.event.inputs.doRelease == 'true' ) && needs.build_ffmpeg.result == 'success' }}
     needs: build_ffmpeg
     runs-on: ubuntu-latest
     steps:
@@ -168,6 +180,7 @@ jobs:
         id: create_release
         run: |
           set -xe
+          shopt -s nullglob
           RELDATE="$(date +'%Y-%m-%d %H:%M')"
           NAME="Auto-Build $RELDATE"
           TAGNAME="autobuild-$(date +'%Y-%m-%d-%H-%M')"
@@ -179,6 +192,7 @@ jobs:
       - name: Update Latest
         run: |
           set -xe
+          shopt -s nullglob
           mkdir latest_artifacts
           ./util/repack_latest.sh latest_artifacts artifacts/*.{zip,tar.xz}
           NAME="Latest Auto-Build (${{ steps.create_release.outputs.rel_date }})"

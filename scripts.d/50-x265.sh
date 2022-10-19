@@ -1,7 +1,7 @@
 #!/bin/bash
 
-X265_REPO="https://bitbucket.org/multicoreware/x265_git.git"
-X265_COMMIT="9b59d45549f460e41a852cfd276f9b89eed2112a"
+SCRIPT_REPO="https://bitbucket.org/multicoreware/x265_git.git"
+SCRIPT_COMMIT="0b75c44c10e605fe9e9ebed58f04a46271131827"
 
 ffbuild_enabled() {
     [[ $VARIANT == lgpl* ]] && return -1
@@ -9,9 +9,9 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerbuild() {
-    git clone "$X265_REPO" x265
+    git clone "$SCRIPT_REPO" x265
     cd x265
-    git checkout "$X265_COMMIT"
+    git checkout "$SCRIPT_COMMIT"
 
     local common_config=(
         -DCMAKE_INSTALL_PREFIX="$FFBUILD_PREFIX"
@@ -61,6 +61,8 @@ EOF
     fi
 
     make install
+
+    echo "Libs.private: -lstdc++" >> "$FFBUILD_PREFIX"/lib/pkgconfig/x265.pc
 }
 
 ffbuild_configure() {

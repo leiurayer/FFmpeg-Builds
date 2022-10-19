@@ -1,14 +1,15 @@
 #!/bin/bash
 
-OPENSSL_REPO="https://github.com/openssl/openssl.git"
-OPENSSL_COMMIT="OpenSSL_1_1_1o"
+SCRIPT_REPO="https://github.com/openssl/openssl.git"
+SCRIPT_COMMIT="OpenSSL_1_1_1q"
+SCRIPT_TAGFILTER="OpenSSL_1_1_1*"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$OPENSSL_REPO" "$OPENSSL_COMMIT" openssl
+    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" openssl
     cd openssl
 
     local myconf=(
@@ -35,6 +36,11 @@ ffbuild_dockerbuild() {
         myconf+=(
             --cross-compile-prefix="$FFBUILD_CROSS_PREFIX"
             linux-x86_64
+        )
+    elif [[ $TARGET == linuxarm64 ]]; then
+        myconf+=(
+            --cross-compile-prefix="$FFBUILD_CROSS_PREFIX"
+            linux-aarch64
         )
     else
         echo "Unknown target"

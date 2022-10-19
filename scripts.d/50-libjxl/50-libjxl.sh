@@ -1,7 +1,7 @@
 #!/bin/bash
 
-JXL_REPO="https://github.com/libjxl/libjxl.git"
-JXL_COMMIT="bd48652dba3469244af489e48c645307191cc039"
+SCRIPT_REPO="https://github.com/libjxl/libjxl.git"
+SCRIPT_COMMIT="004f66baa16fe13eb2b83be68ee95b60d77820ae"
 
 ffbuild_enabled() {
     [[ $ADDINS_STR == *4.4* ]] && return -1
@@ -10,7 +10,7 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$JXL_REPO" "$JXL_COMMIT" jxl
+    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" jxl
     cd jxl
     git submodule update --init --recursive --depth 1 --recommend-shallow third_party/{highway,skcms}
 
@@ -19,10 +19,11 @@ ffbuild_dockerbuild() {
     if [[ $TARGET == linux* ]]; then
         # our glibc is too old(<2.25), and their detection fails for some reason
         export CXXFLAGS="$CXXFLAGS -DVQSORT_GETRANDOM=0 -DVQSORT_SECURE_SEED=0"
+    elif [[ $TARGET == win* ]]; then
+        # Fix AVX2 related crash due to unaligned stack memory  
+        export CXXFLAGS="$CXXFLAGS -Wa,-muse-unaligned-vector-move"
+        export CFLAGS="$CFLAGS -Wa,-muse-unaligned-vector-move"
     fi
-
-    export CXXFLAGS="$CXXFLAGS -DHWY_COMPILE_ONLY_SCALAR"
-    export CFLAGS="$CFLAGS -DHWY_COMPILE_ONLY_SCALAR"
 
     cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE="$FFBUILD_CMAKE_TOOLCHAIN" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$FFBUILD_PREFIX" -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         -DBUILD_SHARED_LIBS=OFF -DJPEGXL_STATIC=OFF -DJPEGXL_ENABLE_TOOLS=OFF -DJPEGXL_ENABLE_VIEWERS=OFF -DJPEGXL_EMSCRIPTEN=OFF -DJPEGXL_ENABLE_DOXYGEN=OFF \
@@ -40,10 +41,6 @@ ffbuild_dockerbuild() {
     if [[ $TARGET == win* ]]; then
         echo "Libs.private: -ladvapi32" >> "${FFBUILD_PREFIX}"/lib/pkgconfig/libjxl.pc
         echo "Libs.private: -ladvapi32" >> "${FFBUILD_PREFIX}"/lib/pkgconfig/libjxl_threads.pc
-
-        mv "${FFBUILD_PREFIX}"/lib/libjxl{-static,}.a
-        mv "${FFBUILD_PREFIX}"/lib/libjxl_dec{-static,}.a
-        mv "${FFBUILD_PREFIX}"/lib/libjxl_threads{-static,}.a
     fi
 }
 

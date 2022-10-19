@@ -1,7 +1,7 @@
 #!/bin/bash
 
-FREI0R_REPO="https://github.com/dyne/frei0r.git"
-FREI0R_COMMIT="114a72f438fa04c5d12593e38dac148dbb9ce10c"
+SCRIPT_REPO="https://github.com/dyne/frei0r.git"
+SCRIPT_COMMIT="a9d15ff07e130baf3408da6e1f1b22f82e7c62b6"
 
 ffbuild_enabled() {
     [[ $VARIANT == lgpl* ]] && return -1
@@ -10,7 +10,7 @@ ffbuild_enabled() {
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$FREI0R_REPO" "$FREI0R_COMMIT" frei0r
+    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" frei0r
     cd frei0r
 
     ./autogen.sh

@@ -1,14 +1,14 @@
 #!/bin/bash
 
-LIBXML2_REPO="https://gitlab.gnome.org/GNOME/libxml2.git"
-LIBXML2_COMMIT="145170125af959c814d33899bebb57f2da2f541b"
+SCRIPT_REPO="https://gitlab.gnome.org/GNOME/libxml2.git"
+SCRIPT_COMMIT="e2bae1bc049f7ffac9c35eefa33f8a00d4032170"
 
 ffbuild_enabled() {
     return 0
 }
 
 ffbuild_dockerbuild() {
-    git-mini-clone "$LIBXML2_REPO" "$LIBXML2_COMMIT" libxml2
+    git-mini-clone "$SCRIPT_REPO" "$SCRIPT_COMMIT" libxml2
     cd libxml2
 
     local myconf=(
